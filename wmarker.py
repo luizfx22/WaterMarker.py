@@ -1,30 +1,36 @@
 # Import stuff
-import sqlalchemy as sql
+from sqlalchemy.sql import select
+import sqlalchemy as db
 import cv2
 import json
 
-"""
-	Instructions:
-		1. Create a file called 'settings.json'
-		2. Write these lines in it:
-			{
-				"mysql": {
-					"url": "",
-					"user": "",
-					"password": "",
-					"db": ""
-				},
-				"input-dir": "",
-				"thumbnails-dir": "",
-				"output-dir": "/wmarker_results/"
-			}
-		3. Replace the empty spaces with your actual data, if you're not using MySQL leave it blank!
-		disclaimer: I didn't comitted settings.json due to sensitive data placed in it!
-"""
 
 with open('settings.json', 'r+') as settingsFile:
 	settings = json.load(settingsFile)
 	settingsFile.close()
 
-mysql = settings["mysql"]
-print(mysql)
+sql_settings = settings["sql-settings"]
+
+# SQLAlchemy engine instantiation
+connection_string = f"{sql_settings['dialect']}://{sql_settings['username']}:{sql_settings['password']}@{sql_settings['host']}:{sql_settings['port']}/{sql_settings['database']}"
+try:
+	engine = db.create_engine(connection_string)
+	connection = engine.connect()
+	metadata = db.MetaData()
+	table = db.Table(sql_settings["table"], metadata, autoload=True, autoload_with=engine)
+except Exception as e:
+	print("Error!")
+	print(e)
+	exit()
+	
+try:
+	query = select([table.columns.IMGT, table.columns.IMG]).where(table.columns.Inativo != 1)
+	ResProxy = connection.execute(query)
+	ResSet = ResProxy.fetchall()
+	print(ResSet)
+	print(len(ResSet))
+	
+except Exception as e:
+	print("Error!")
+	print(e)
+	exit()
