@@ -3,7 +3,6 @@
 A simple script to add watermark in millions of photos in one click!
 
 ## Instructions:
----
 1. Create a file called 'settings.json'
 2. Write these lines in it:
 ```json
