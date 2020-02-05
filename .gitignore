@@ -130,4 +130,4 @@ dmypy.json
 
 
 # Settings.json cannot be commited!
-*.json
+settings.json

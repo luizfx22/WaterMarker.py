@@ -1,0 +1,4 @@
+imutils==0.5.3
+numpy==1.18.1
+opencv-python==4.2.0.32
+SQLAlchemy==1.3.13
