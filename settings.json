@@ -1,9 +1,0 @@
-{
-	"mysql": {
-		"url": "localhost",
-		"user": "root",
-		"password": "toor55235//--",
-		"db": "photos"
-	},
-	"output-dir": "/wmarker_results/"
-}
