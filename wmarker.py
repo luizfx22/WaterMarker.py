@@ -2,8 +2,8 @@
 # Import stuff
 import os
 import json
-from sqlalchemy.sql import select
-import sqlalchemy as db
+# from sqlalchemy.sql import select
+# import sqlalchemy as db
 from PIL import Image
 import time
 
@@ -15,9 +15,21 @@ class WMarkr:
             settingsFile.close()
         self.sql_settings = self.settings["sql-settings"]
 
+        with open('AllImages.json', 'r+') as allImagesIdx:
+            self.allIMG = json.load(allImagesIdx)
+            allImagesIdx.close()
+
     def connect(self):
         # SQLAlchemy engine instantiation
-        connection_string = f"{self.sql_settings['dialect']}://{self.sql_settings['username']}:{self.sql_settings['password']}@{self.sql_settings['host']}:{self.sql_settings['port']}/{self.sql_settings['database']}"
+        dialect = self.sql_settings['dialect']
+        username = self.sql_settings['username']
+        password = self.sql_settings['password']
+        host = self.sql_settings['host']
+        port = str(self.sql_settings['port'])
+        database = self.sql_settings['database']
+
+        connection_string = dialect + "://" + username + ":" + password + "@" + host + ":" + port + "/" + database
+        print(connection_string)
         try:
             engine = db.create_engine(connection_string)
             self.connection = engine.connect()
@@ -44,7 +56,12 @@ class WMarkr:
             return
 
     def addWatermarkImage(self, file_path, output_path):
-        base_image = Image.open(file_path)
+        try:
+            base_image = Image.open(file_path)
+        except Exception as e:
+            print("Skipped image!")
+            return False
+        
         logo = Image.open(self.settings["watermark-image-location"])
         logo = logo.convert('RGBA')
 
@@ -64,7 +81,11 @@ class WMarkr:
             return False
 
     def addWatermarkThumbnail(self, file_path, output_path):
-        base_image = Image.open(file_path)
+        try:
+            base_image = Image.open(file_path)
+        except Exception as e:
+            print("Skipped image!")
+            return False
         logo = Image.open(self.settings["watermark-image-location"])
         logo.thumbnail((110, 110), Image.ANTIALIAS)
         logo = logo.convert('RGBA')
@@ -89,26 +110,19 @@ class WMarkr:
 bnchmrk_start = time.time()
 
 marker = WMarkr()
-conn = marker.connect()
 
-query = marker.query(conn)
+query = marker.allIMG
 
-mark_ = len(query)
-
-for image_tuple in query:
-
+for _ in query:
+    image_tuple = (_["IMGT"], _["IMG"])
     thumbnail_path = marker.settings["thumbnails-dir"] + image_tuple[0]
     actual_image = marker.settings["input-dir"] + image_tuple[1]
 
     if not marker.addWatermarkImage(actual_image, marker.settings["output-main-dir"]):
-        print(f"Skipped file {image_tuple[1]}!")
+        print("Skipped file " + image_tuple[1] + "!")
     if not marker.addWatermarkThumbnail(thumbnail_path, marker.settings["output-thumb-dir"]):
-        print(f"Skipped thumbnail {image_tuple[0]}!")
+        print("Skipped thumbnail " + image_tuple[0] + "!")
 
 
 bnchmrk_end = time.time() - bnchmrk_start
-print(f"It took about {bnchmrk_end} seconds to mark {mark_} images!")
-
-# marker.addWatermarkThumbnail(marker.settings["thumbnails-dir"])
-# result = marker.query(marker.connect())
-
+print("It took about" + str(bnchmrk_end) +" seconds to mark all images!")
